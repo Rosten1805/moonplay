@@ -27,7 +27,11 @@ export async function GET(
   const webStream = new ReadableStream({
     start(controller) {
       nodeStream.on('data', (chunk) => controller.enqueue(chunk))
-      nodeStream.on('end', () => controller.close())
+      nodeStream.on('end', () => {
+        controller.close()
+        // Clean up file after serving — important in cloud environments
+        fs.unlink(filePath, () => {})
+      })
       nodeStream.on('error', (err) => controller.error(err))
     },
     cancel() {
