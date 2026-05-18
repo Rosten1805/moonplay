@@ -17,7 +17,7 @@ WORKDIR /app
 
 # Install dependencies
 COPY package*.json ./
-RUN npm ci
+RUN npm install --frozen-lockfile=false
 
 # Copy source and build
 COPY . .
