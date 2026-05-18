@@ -30,13 +30,11 @@ export async function GET(req: NextRequest) {
       message.includes('spawn') ||
       message.includes('command not found')
     ) {
-      return NextResponse.json(
-        {
-          error:
-            'yt-dlp no está instalado. Ejecuta en PowerShell (como Administrador):\n  winget install yt-dlp.yt-dlp\n  winget install Gyan.FFmpeg\nLuego reinicia la app.',
-        },
-        { status: 500 }
-      )
+      const isWindows = process.platform === 'win32'
+      const errorMsg = isWindows
+        ? 'yt-dlp no está instalado. Ejecuta en PowerShell (como Administrador):\n  winget install yt-dlp.yt-dlp\n  winget install Gyan.FFmpeg\nLuego reinicia la app.'
+        : `yt-dlp no encontrado en ${process.env.YTDLP_PATH || 'yt-dlp'}. Error: ${message}`
+      return NextResponse.json({ error: errorMsg }, { status: 500 })
     }
 
     if (message.includes('unavailable') || message.includes('Private video')) {

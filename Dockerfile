@@ -29,5 +29,7 @@ RUN mkdir -p downloads data
 EXPOSE 3000
 ENV PORT=3000
 ENV NODE_ENV=production
+ENV YTDLP_PATH=/usr/local/bin/yt-dlp
+ENV FFMPEG_PATH=/usr/bin/ffmpeg
 
 CMD ["npm", "start"]
