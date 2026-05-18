@@ -3,6 +3,8 @@
 > Local personal YouTube downloader with a synthwave aesthetic.
 > Download MP3s and MP4s from YouTube, fully offline, no accounts.
 
+**Live demo:** https://moonplay-production.up.railway.app
+
 ---
 
 ## Prerequisites
