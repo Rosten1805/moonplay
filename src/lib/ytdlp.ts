@@ -1,9 +1,12 @@
 import { exec } from 'child_process'
 import { promisify } from 'util'
+import fs from 'fs'
 import { VideoInfo, PlaylistInfo, PlaylistEntry, VideoFormat, DownloadJob } from '@/types'
 import { isPlaylistUrl } from './utils'
 
 const execAsync = promisify(exec)
+
+export const COOKIES_PATH = process.env.YTDLP_COOKIES_PATH || '/app/data/cookies.txt'
 
 export function getYtDlpBin(): string {
   return process.env.YTDLP_PATH || 'yt-dlp'
@@ -11,6 +14,14 @@ export function getYtDlpBin(): string {
 
 export function getFfmpegPath(): string {
   return process.env.FFMPEG_PATH || 'ffmpeg'
+}
+
+function getCookiesFlag(): string {
+  return fs.existsSync(COOKIES_PATH) ? `--cookies "${COOKIES_PATH}"` : ''
+}
+
+function getCookiesArgs(): string[] {
+  return fs.existsSync(COOKIES_PATH) ? ['--cookies', COOKIES_PATH] : []
 }
 
 export async function getVideoInfo(url: string): Promise<VideoInfo | PlaylistInfo> {
@@ -25,8 +36,9 @@ async function getSingleVideoInfo(url: string): Promise<VideoInfo> {
   let stdout: string
 
   try {
+    const cookiesFlag = getCookiesFlag()
     const result = await execAsync(
-      `"${bin}" --dump-json --no-warnings --no-playlist "${url}"`,
+      `"${bin}" --dump-json --no-warnings --no-playlist ${cookiesFlag} "${url}"`,
       { maxBuffer: 15 * 1024 * 1024, timeout: 30_000 }
     )
     stdout = result.stdout
@@ -58,8 +70,9 @@ async function getPlaylistInfo(url: string): Promise<PlaylistInfo> {
   let stdout: string
 
   try {
+    const cookiesFlag = getCookiesFlag()
     const result = await execAsync(
-      `"${bin}" --flat-playlist --dump-json --no-warnings "${url}"`,
+      `"${bin}" --flat-playlist --dump-json --no-warnings ${cookiesFlag} "${url}"`,
       { maxBuffer: 50 * 1024 * 1024, timeout: 60_000 }
     )
     stdout = result.stdout
@@ -149,6 +162,7 @@ export function buildYtDlpArgs(job: DownloadJob, outputDir: string): string[] {
   const ffmpegPath = getFfmpegPath()
 
   const baseArgs = [
+    ...getCookiesArgs(),
     '--no-warnings',
     '--newline',
     '--progress',
