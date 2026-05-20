@@ -24,6 +24,8 @@ function getCookiesArgs(): string[] {
   return fs.existsSync(COOKIES_PATH) ? ['--cookies', COOKIES_PATH] : []
 }
 
+const EJS_ARGS = ['--js-runtimes', 'node', '--remote-components', 'ejs:github']
+
 export async function getVideoInfo(url: string): Promise<VideoInfo | PlaylistInfo> {
   if (isPlaylistUrl(url)) {
     return getPlaylistInfo(url)
@@ -38,7 +40,7 @@ async function getSingleVideoInfo(url: string): Promise<VideoInfo> {
   try {
     const cookiesFlag = getCookiesFlag()
     const result = await execAsync(
-      `"${bin}" --dump-json --no-warnings --no-playlist ${cookiesFlag} "${url}"`,
+      `"${bin}" --dump-json --no-warnings --no-playlist --js-runtimes node --remote-components ejs:github ${cookiesFlag} "${url}"`,
       { maxBuffer: 15 * 1024 * 1024, timeout: 30_000 }
     )
     stdout = result.stdout
@@ -72,7 +74,7 @@ async function getPlaylistInfo(url: string): Promise<PlaylistInfo> {
   try {
     const cookiesFlag = getCookiesFlag()
     const result = await execAsync(
-      `"${bin}" --flat-playlist --dump-json --no-warnings ${cookiesFlag} "${url}"`,
+      `"${bin}" --flat-playlist --dump-json --no-warnings --js-runtimes node --remote-components ejs:github ${cookiesFlag} "${url}"`,
       { maxBuffer: 50 * 1024 * 1024, timeout: 60_000 }
     )
     stdout = result.stdout
@@ -162,6 +164,7 @@ export function buildYtDlpArgs(job: DownloadJob, outputDir: string): string[] {
   const ffmpegPath = getFfmpegPath()
 
   const baseArgs = [
+    ...EJS_ARGS,
     ...getCookiesArgs(),
     '--no-warnings',
     '--newline',
