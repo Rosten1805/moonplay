@@ -86,6 +86,12 @@ class DownloadManager {
           active.job.filePath = mergeMatch[1].trim()
         }
 
+        // Capture final path after audio extraction (MP3 conversion)
+        const extractMatch = line.match(/\[ExtractAudio\] Destination: (.+)/)
+        if (extractMatch) {
+          active.job.filePath = extractMatch[1].trim()
+        }
+
         if (line.includes('[ffmpeg]') || line.includes('[Merger]') || line.includes('Converting')) {
           active.job.status = 'processing'
           emit({ id: job.id, percent: 99, speed: '', eta: '', status: 'processing' })
