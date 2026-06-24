@@ -1,6 +1,17 @@
-# Moonplay
+<p align="center">
+  <img src="src/assets/logotype-moonplay.webp" alt="Moonplay" width="320" />
+</p>
 
-A local YouTube downloader for Windows. Download MP3s and MP4s directly to your machine — no accounts, no cloud, no tracking.
+<p align="center">
+  A local YouTube downloader for Windows.<br/>
+  Download MP3s and MP4s directly to your machine — no accounts, no cloud, no tracking.
+</p>
+
+---
+
+<p align="center">
+  <img src="public/moonplay-screen.png" alt="Moonplay app screenshot" width="860" />
+</p>
 
 ---
 
