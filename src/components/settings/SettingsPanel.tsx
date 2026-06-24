@@ -1,7 +1,7 @@
 'use client'
 
-import { type ReactNode, useState, useEffect, useRef } from 'react'
-import { type LucideIcon, Settings, FolderOpen, RotateCcw, Terminal, Cpu, Cookie, CheckCircle2, XCircle, Upload, Trash2 } from 'lucide-react'
+import { type ReactNode, useState, useEffect } from 'react'
+import { type LucideIcon, Settings, FolderOpen, RotateCcw, Terminal, Cpu } from 'lucide-react'
 import { useSettingsStore } from '@/store/settingsStore'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -18,83 +18,22 @@ import {
 import { AUDIO_QUALITIES, VIDEO_QUALITIES, DownloadFormat } from '@/types'
 import { toast } from '@/components/ui/use-toast'
 
-function CookiesSection() {
-  const [cookiesExist, setCookiesExist] = useState<boolean | null>(null)
-  const [uploading, setUploading] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-
-  const checkCookies = async () => {
-    const res = await fetch('/api/cookies')
-    const data = await res.json()
-    setCookiesExist(data.exists)
-  }
-
-  useEffect(() => { checkCookies() }, [])
-
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setUploading(true)
-    const form = new FormData()
-    form.append('file', file)
-    await fetch('/api/cookies', { method: 'POST', body: form })
-    await checkCookies()
-    setUploading(false)
-    toast({ title: 'Cookies cargadas', description: 'YouTube cookies actualizadas correctamente' } as any)
-  }
-
-  const handleDelete = async () => {
-    await fetch('/api/cookies', { method: 'DELETE' })
-    await checkCookies()
-    toast({ title: 'Cookies eliminadas' } as any)
-  }
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        {cookiesExist === true && <CheckCircle2 className="h-4 w-4 text-green-400" />}
-        {cookiesExist === false && <XCircle className="h-4 w-4 text-red-400" />}
-        {cookiesExist === null && <div className="h-4 w-4 rounded-full bg-synth-border/50" />}
-        <span className="text-sm text-synth-text">
-          {cookiesExist === true ? 'Cookies cargadas — YouTube desbloqueado' : 'Sin cookies — YouTube puede bloquear descargas'}
-        </span>
-      </div>
-
-      <p className="text-xs text-synth-text-dim leading-relaxed">
-        Exporta tus cookies de YouTube con la extensión{' '}
-        <span className="text-accent font-mono">Get cookies.txt LOCALLY</span>{' '}
-        (Chrome/Firefox), elige el dominio <span className="font-mono">youtube.com</span> y sube el archivo aquí.
-      </p>
-
-      <div className="flex gap-2">
-        <input ref={fileInputRef} type="file" accept=".txt" className="hidden" onChange={handleUpload} />
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={uploading}
-          className="gap-2"
-        >
-          <Upload className="h-3.5 w-3.5" />
-          {uploading ? 'Subiendo...' : 'Subir cookies.txt'}
-        </Button>
-        {cookiesExist && (
-          <Button size="sm" variant="ghost" onClick={handleDelete} className="gap-2 text-red-400 hover:text-red-300">
-            <Trash2 className="h-3.5 w-3.5" />
-            Eliminar
-          </Button>
-        )}
-      </div>
-    </div>
-  )
-}
-
 export function SettingsPanel() {
   const { settings, updateSettings, resetSettings } = useSettingsStore()
+  const [isElectron, setIsElectron] = useState(false)
+
+  useEffect(() => {
+    setIsElectron(!!window.electronAPI)
+  }, [])
 
   const handleReset = () => {
     resetSettings()
     toast({ title: 'Settings reset', description: 'All settings restored to defaults' } as any)
+  }
+
+  const handleBrowseFolder = async () => {
+    const folder = await window.electronAPI!.selectFolder()
+    if (folder) updateSettings({ downloadPath: folder })
   }
 
   return (
@@ -113,14 +52,28 @@ export function SettingsPanel() {
       <div className="space-y-7">
         <Section title="Downloads" icon={FolderOpen}>
           <Field label="Download folder">
-            <Input
-              value={settings.downloadPath}
-              onChange={(e) => updateSettings({ downloadPath: e.target.value })}
-              placeholder="./downloads"
-              className="font-mono text-xs"
-            />
+            <div className="flex gap-2">
+              <Input
+                value={settings.downloadPath}
+                onChange={(e) => updateSettings({ downloadPath: e.target.value })}
+                placeholder="./downloads"
+                className="font-mono text-xs"
+              />
+              {isElectron && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleBrowseFolder}
+                  className="shrink-0 gap-1.5"
+                  title="Browse for folder"
+                >
+                  <FolderOpen className="h-3.5 w-3.5" />
+                </Button>
+              )}
+            </div>
             <p className="text-[10px] text-synth-text-dim mt-1">
-              Relative to the app folder, or an absolute path
+              Absolute path or relative to the app folder
             </p>
           </Field>
 
@@ -209,12 +162,6 @@ export function SettingsPanel() {
               onCheckedChange={(v) => updateSettings({ embedMetadata: v })}
             />
           </div>
-        </Section>
-
-        <Separator />
-
-        <Section title="YouTube cookies" icon={Cookie}>
-          <CookiesSection />
         </Section>
 
         <Separator />

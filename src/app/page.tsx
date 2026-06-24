@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Background } from '@/components/layout/Background'
 import { Header } from '@/components/layout/Header'
 import { URLInput } from '@/components/download/URLInput'
@@ -10,9 +10,24 @@ import { DownloadQueue } from '@/components/download/DownloadQueue'
 import { HistoryPanel } from '@/components/history/HistoryPanel'
 import { SettingsPanel } from '@/components/settings/SettingsPanel'
 import { Toaster } from '@/components/ui/toaster'
+import { toast } from '@/components/ui/use-toast'
 
 export default function Home() {
   const [tab, setTab] = useState('download')
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { title } = (e as CustomEvent<{ title: string }>).detail
+      toast({
+        title: 'Download complete',
+        description: title || 'Your file is ready in History.',
+        duration: 4000,
+      } as any)
+      setTab('history')
+    }
+    window.addEventListener('moonplay:download-complete', handler)
+    return () => window.removeEventListener('moonplay:download-complete', handler)
+  }, [])
 
   return (
     <div className="relative min-h-screen bg-synth-bg">

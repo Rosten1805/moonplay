@@ -2,6 +2,7 @@
 
 import { create } from 'zustand'
 import { VideoInfo, PlaylistInfo, DownloadJob, DownloadProgress, DownloadFormat } from '@/types'
+import { useSettingsStore } from './settingsStore'
 
 interface DownloadStore {
   // URL input
@@ -73,10 +74,11 @@ export const useDownloadStore = create<DownloadStore>((set, get) => ({
   },
 
   startDownload: async (options) => {
+    const { settings } = useSettingsStore.getState()
     const res = await fetch('/api/download', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(options),
+      body: JSON.stringify({ ...options, outputPath: settings.downloadPath }),
     })
     const data = await res.json()
     if (!res.ok) return null
@@ -114,8 +116,8 @@ export const useDownloadStore = create<DownloadStore>((set, get) => ({
   },
 
   updateProgress: (progress) => {
-    set((s) => ({
-      queue: s.queue.map((j) =>
+    set((s) => {
+      const updated = s.queue.map((j) =>
         j.id === progress.id
           ? {
               ...j,
@@ -128,8 +130,17 @@ export const useDownloadStore = create<DownloadStore>((set, get) => ({
               error: progress.error ?? j.error,
             }
           : j
-      ),
-    }))
+      )
+
+      if (progress.done && progress.status === 'completed') {
+        const job = updated.find((j) => j.id === progress.id)
+        window.dispatchEvent(
+          new CustomEvent('moonplay:download-complete', { detail: { title: job?.title ?? '' } })
+        )
+      }
+
+      return { queue: updated }
+    })
   },
 
   removeFromQueue: (id) => {

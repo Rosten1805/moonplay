@@ -19,9 +19,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid format. Use mp3 or mp4' }, { status: 400 })
   }
 
-  const resolvedOutput = outputPath
-    ? path.resolve(outputPath)
-    : path.join(process.cwd(), 'downloads')
+  const defaultDir = process.env.MOONPLAY_DOWNLOADS_DIR || path.join(process.cwd(), 'downloads')
+  const resolvedOutput =
+    outputPath && path.isAbsolute(outputPath) ? outputPath : defaultDir
 
   const job: DownloadJob = {
     id: uuidv4(),

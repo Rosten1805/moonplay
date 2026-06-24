@@ -92,9 +92,17 @@ class DownloadManager {
           active.job.filePath = extractMatch[1].trim()
         }
 
-        if (line.includes('[ffmpeg]') || line.includes('[Merger]') || line.includes('Converting')) {
+        if (
+          line.includes('[ffmpeg]') ||
+          line.includes('[Merger]') ||
+          line.includes('[ExtractAudio]') ||
+          line.includes('[EmbedThumbnail]') ||
+          line.includes('[Metadata]') ||
+          line.includes('[FixupM4a]') ||
+          line.includes('Converting')
+        ) {
           active.job.status = 'processing'
-          emit({ id: job.id, percent: 99, speed: '', eta: '', status: 'processing' })
+          emit({ id: job.id, percent: 100, speed: '', eta: '', status: 'processing' })
         }
       }
     })

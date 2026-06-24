@@ -14,6 +14,7 @@ export async function GET(
   let removeProgress: (() => void) | null = null
   let removeComplete: (() => void) | null = null
   let streamController: ReadableStreamDefaultController<Uint8Array> | null = null
+  let heartbeatTimer: ReturnType<typeof setInterval> | null = null
 
   const send = (data: object) => {
     try {
@@ -22,6 +23,7 @@ export async function GET(
   }
 
   const close = () => {
+    if (heartbeatTimer) { clearInterval(heartbeatTimer); heartbeatTimer = null }
     removeProgress?.()
     removeComplete?.()
     try { streamController?.close() } catch { /* already closed */ }
@@ -38,10 +40,15 @@ export async function GET(
         return
       }
 
-      // Send heartbeat comment so connection stays open
+      // Send initial heartbeat and keep-alive every 15s during long ffmpeg processing
       try {
         controller.enqueue(encoder.encode(': connected\n\n'))
       } catch { return }
+
+      heartbeatTimer = setInterval(() => {
+        try { streamController?.enqueue(encoder.encode(': heartbeat\n\n')) }
+        catch { close() }
+      }, 15_000)
 
       removeProgress = downloadManager.addProgressListener(id, (progress) => {
         send(progress)

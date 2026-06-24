@@ -14,11 +14,16 @@ interface HistoryItemProps {
 
 export function HistoryItem({ item, onDelete }: HistoryItemProps) {
   const openFolder = async () => {
-    await fetch('/api/open-folder', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ filePath: item.filePath }),
-    })
+    if (window.electronAPI?.openPath && item.filePath) {
+      const folder = item.filePath.replace(/[/\\][^/\\]+$/, '') || item.filePath
+      await window.electronAPI.openPath(folder)
+    } else {
+      await fetch('/api/open-folder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filePath: item.filePath }),
+      })
+    }
   }
 
   return (
@@ -51,7 +56,7 @@ export function HistoryItem({ item, onDelete }: HistoryItemProps) {
         <Badge variant={item.format === 'mp3' ? 'mp3' : 'mp4'}>{item.format}</Badge>
         <span className="text-xs text-synth-text-dim font-mono hidden sm:block">{item.quality}</span>
 
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-1">
+        <div className="flex items-center gap-1 ml-1">
           {item.filePath && (
             <Button
               variant="ghost"
@@ -66,7 +71,7 @@ export function HistoryItem({ item, onDelete }: HistoryItemProps) {
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-synth-text-dim hover:text-red-400"
+            className="h-8 w-8 text-synth-text-dim hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
             onClick={() => onDelete(item.id)}
             title="Remove from history"
           >

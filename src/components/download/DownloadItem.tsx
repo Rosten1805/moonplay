@@ -1,7 +1,6 @@
 'use client'
 
 import Image from 'next/image'
-import { useEffect, useRef } from 'react'
 import { X, CheckCircle2, AlertCircle, XCircle, FolderOpen, Loader2, Zap } from 'lucide-react'
 import { useDownloadStore } from '@/store/downloadStore'
 import { DownloadJob } from '@/types'
@@ -32,25 +31,18 @@ export function DownloadItem({ job }: DownloadItemProps) {
   const isFailed = job.status === 'failed'
   const isCancelled = job.status === 'cancelled'
 
-  const autoDownloaded = useRef(false)
-  useEffect(() => {
-    if (isDone && job.filePath && !autoDownloaded.current) {
-      autoDownloaded.current = true
-      const a = document.createElement('a')
-      a.href = `/api/download/${job.id}/file`
-      a.download = job.filePath.split(/[/\\]/).pop() ?? job.title
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-    }
-  }, [isDone, job.filePath, job.id, job.title])
 
   const openFolder = async () => {
-    await fetch('/api/open-folder', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ filePath: job.filePath }),
-    })
+    if (window.electronAPI?.openPath && job.filePath) {
+      const folder = job.filePath.replace(/[/\\][^/\\]+$/, '') || job.filePath
+      await window.electronAPI.openPath(folder)
+    } else {
+      await fetch('/api/open-folder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filePath: job.filePath }),
+      })
+    }
   }
 
   return (
@@ -121,7 +113,7 @@ export function DownloadItem({ job }: DownloadItemProps) {
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-synth-text-dim hover:text-accent opacity-0 group-hover:opacity-100"
+            className="h-8 w-8 text-synth-text-dim hover:text-accent"
             onClick={openFolder}
             title="Open folder"
           >
