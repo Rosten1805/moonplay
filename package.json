@@ -2,13 +2,62 @@
   "name": "moonplay",
   "version": "0.1.0",
   "private": true,
+  "main": "electron-dist/main.js",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start -p ${PORT:-3000}",
-    "lint": "next lint"
+    "lint": "next lint",
+    "electron:compile": "tsc --project electron/tsconfig.json",
+    "electron:dev": "concurrently -k -s first -n \"NEXT,ELECTRON\" --prefix-colors \"magenta,cyan\" \"npm run dev\" \"npm run electron:compile && wait-on http://localhost:3000 && electron .\"",
+    "electron:build": "npm run build && xcopy /E /I /Y .next\\static .next\\standalone\\.next\\static && xcopy /E /I /Y public .next\\standalone\\public && npm run electron:compile && electron-builder",
+    "electron:pack": "npm run build && xcopy /E /I /Y .next\\static .next\\standalone\\.next\\static && xcopy /E /I /Y public .next\\standalone\\public && npm run electron:compile && electron-builder --dir"
+  },
+  "build": {
+    "appId": "com.moonplay.app",
+    "productName": "Moonplay",
+    "asar": true,
+    "afterPack": "./scripts/afterPack.cjs",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "electron-dist/**/*",
+      "public/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": ".next/standalone",
+        "to": "app/.next/standalone",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "node_modules/@ffmpeg-installer/win32-x64/ffmpeg.exe",
+        "to": "fftools/ffmpeg.exe"
+      },
+      {
+        "from": "node_modules/@ffprobe-installer/win32-x64/ffprobe.exe",
+        "to": "fftools/ffprobe.exe"
+      }
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "public/icon.ico"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "public/icon.icns"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
   },
   "dependencies": {
+    "@ffmpeg-installer/ffmpeg": "^1.1.0",
+    "@ffprobe-installer/ffprobe": "^2.1.2",
     "@radix-ui/react-dialog": "^1.1.1",
     "@radix-ui/react-label": "^2.1.0",
     "@radix-ui/react-progress": "^1.1.0",
@@ -36,10 +85,14 @@
     "@types/react-dom": "^18.3.0",
     "@types/uuid": "^10.0.0",
     "autoprefixer": "^10.4.19",
+    "concurrently": "^10.0.3",
+    "electron": "^42.4.1",
+    "electron-builder": "^26.15.3",
     "eslint": "^8.57.0",
     "eslint-config-next": "14.2.15",
     "postcss": "^8.4.38",
     "tailwindcss": "^3.4.4",
-    "typescript": "^5.4.5"
+    "typescript": "^5.4.5",
+    "wait-on": "^9.0.10"
   }
 }
