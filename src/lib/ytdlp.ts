@@ -197,6 +197,8 @@ export function buildYtDlpArgs(job: DownloadJob, outputDir: string): string[] {
     formatStr,
     '--merge-output-format',
     'mp4',
+    '--postprocessor-args',
+    'ffmpeg:-c:a aac',
     job.url,
   ]
 }
@@ -215,13 +217,13 @@ function getAudioQualityFlag(quality: string): string {
 
 function getVideoFormatString(quality: string): string {
   const map: Record<string, string> = {
-    best: 'bestvideo+bestaudio/best',
-    '4K': 'bestvideo[height<=2160]+bestaudio/best[height<=2160]/best',
-    '2K': 'bestvideo[height<=1440]+bestaudio/best[height<=1440]/best',
-    '1080p': 'bestvideo[height<=1080]+bestaudio/best[height<=1080]/best',
-    '720p': 'bestvideo[height<=720]+bestaudio/best[height<=720]/best',
-    '480p': 'bestvideo[height<=480]+bestaudio/best[height<=480]/best',
-    '360p': 'bestvideo[height<=360]+bestaudio/best[height<=360]/best',
+    best: 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best',
+    '4K': 'bestvideo[height<=2160][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<=2160]+bestaudio/best',
+    '2K': 'bestvideo[height<=1440][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<=1440]+bestaudio/best',
+    '1080p': 'bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<=1080]+bestaudio/best',
+    '720p': 'bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<=720]+bestaudio/best',
+    '480p': 'bestvideo[height<=480][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<=480]+bestaudio/best',
+    '360p': 'bestvideo[height<=360][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<=360]+bestaudio/best',
   }
   return map[quality] ?? map['best']
 }
